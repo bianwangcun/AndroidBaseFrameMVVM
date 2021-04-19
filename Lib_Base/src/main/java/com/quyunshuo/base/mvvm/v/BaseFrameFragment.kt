@@ -9,8 +9,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewbinding.ViewBinding
 import com.alibaba.android.arouter.launcher.ARouter
+import com.quyunshuo.base.utils.BindingReflex
 import com.quyunshuo.base.utils.EventBusRegister
 import com.quyunshuo.base.utils.EventBusUtils
+import java.lang.reflect.ParameterizedType
 
 /**
  * @Author: QuYunShuo
@@ -18,18 +20,15 @@ import com.quyunshuo.base.utils.EventBusUtils
  * @Class: BaseFrameFragment
  * @Remark: Fragment基类 与项目无关
  */
-abstract class BaseFrameFragment<VB : ViewBinding, VM : ViewModel>(private val vmClass: Class<VM>) :
-    Fragment() {
+abstract class BaseFrameFragment<VB : ViewBinding, VM : ViewModel> : Fragment(), FrameView<VB> {
 
-    protected val mViewModel: VM by lazy(mode = LazyThreadSafetyMode.NONE) {
-        ViewModelProvider(this).get(vmClass)
+    protected val mBinding: VB by lazy(mode = LazyThreadSafetyMode.NONE) {
+        BindingReflex.reflexViewBinding(javaClass, layoutInflater)
     }
 
-    protected val mBinding: VB by lazy(mode = LazyThreadSafetyMode.NONE) { initViewBinding() }
-
-    protected abstract fun initViewBinding(): VB
-    protected abstract fun initView()
-    protected abstract fun initViewObserve()
+    protected val mViewModel: VM by lazy(mode = LazyThreadSafetyMode.NONE) {
+        BindingReflex.reflexViewModel(javaClass, this)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,8 +44,9 @@ abstract class BaseFrameFragment<VB : ViewBinding, VM : ViewModel>(private val v
         ARouter.getInstance().inject(this)
         // 注册EventBus
         if (javaClass.isAnnotationPresent(EventBusRegister::class.java)) EventBusUtils.register(this)
-        initView()
-        initViewObserve()
+        mBinding.initView()
+        initLiveDataObserve()
+        initRequestData()
     }
 
     override fun onDestroy() {

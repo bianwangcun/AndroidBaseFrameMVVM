@@ -1,29 +1,26 @@
 package com.quyunshuo.base.mvvm.v
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModel
 import androidx.viewbinding.ViewBinding
 import com.alibaba.android.arouter.launcher.ARouter
 import com.quyunshuo.base.utils.BindingReflex
 import com.quyunshuo.base.utils.EventBusRegister
 import com.quyunshuo.base.utils.EventBusUtils
+import java.lang.reflect.ParameterizedType
 
 /**
  * @Author: QuYunShuo
- * @Time: 2020/8/27
- * @Class: BaseFrameActivity
- * @Remark: Activity基类 与项目无关
+ * @Time: 2020/9/10
+ * @Class: BaseFrameNotMVVMActivity
+ * @Remark: 不使用 MVVM 的 Activity 基类
  */
-abstract class BaseFrameActivity<VB : ViewBinding, VM : ViewModel> :
-    AppCompatActivity(), FrameView<VB> {
+abstract class BaseFrameNotMVVMActivity<VB : ViewBinding> : AppCompatActivity(),
+    FrameNotMVVMView<VB> {
 
     protected val mBinding: VB by lazy(mode = LazyThreadSafetyMode.NONE) {
         BindingReflex.reflexViewBinding(javaClass, layoutInflater)
-    }
-
-    protected val mViewModel: VM by lazy(mode = LazyThreadSafetyMode.NONE) {
-        BindingReflex.reflexViewModel(javaClass, this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,8 +31,6 @@ abstract class BaseFrameActivity<VB : ViewBinding, VM : ViewModel> :
         // 注册EventBus
         if (javaClass.isAnnotationPresent(EventBusRegister::class.java)) EventBusUtils.register(this)
         mBinding.initView()
-        initLiveDataObserve()
-        initRequestData()
     }
 
     override fun onDestroy() {
